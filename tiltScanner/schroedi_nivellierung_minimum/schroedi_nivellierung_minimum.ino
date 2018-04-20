@@ -34,7 +34,7 @@ const uint16_t homePositionRoll = 2048;
 const uint16_t minValueRoll = 1448;
 const uint16_t maxValueRoll = 2648;
 
-const uint16_t restraint = 5;
+const uint16_t restraint = 57;                                        //restraint of 5° before stop collar of Dynamixel
 
 uint16_t pitch = 0, roll = 0;
 
