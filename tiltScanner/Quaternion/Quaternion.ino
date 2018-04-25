@@ -8,8 +8,6 @@
 #include <geometry_msgs/Quaternion.h>
 #include <std_msgs/UInt16.h>
 
-#include <Wire.h>
-
 
 #define RX 9
 #define TX 10
