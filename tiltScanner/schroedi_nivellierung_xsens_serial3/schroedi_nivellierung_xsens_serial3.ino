@@ -7,7 +7,7 @@
 // --setting for Serial-communication--
 const uint16_t baudrateSerial = 9600;
 const uint8_t storage = 4;
-int inputValue[storage * 2];
+int inputValue[storage * sizeof(float)];
 
 
 // --setting for sensor--
@@ -79,19 +79,22 @@ void setup()
 
 void loop() 
 {
+  int i = 0;
   
   if(Serial.available() >= storage * 2)
   {
     
-    for(int i = 0; i < storage * 2; i++)
+    for(i = 0; i < storage * sizeof(float); i++)
     {
       inputValue[i] = Serial.read();
     }
 
-    w = (100000 * (float)inputValue[0] + inputValue[1]) / 100000;
-    x = (100000 * (float)inputValue[2] + inputValue[3]) / 100000;
-    y = (100000 * (float)inputValue[4] + inputValue[5]) / 100000;
-    z = (100000 * (float)inputValue[6] + inputValue[7]) / 100000;
+    i = 0;
+
+    w = (1000000000 * (float)inputValue[i] + 1000000 * (float)inputValue[++i] + 1000 * (float)inputValue[++i] + (float)inputValue[++i]) / 1000000000;
+    x = (1000000000 * (float)inputValue[++i] + 1000000 * (float)inputValue[++i] + 1000 * (float)inputValue[++i] + (float)inputValue[++i]) / 1000000000;
+    y = (1000000000 * (float)inputValue[++i] + 1000000 * (float)inputValue[++i] + 1000 * (float)inputValue[++i] + (float)inputValue[++i]) / 1000000000;
+    z = (1000000000 * (float)inputValue[++i] + 1000000 * (float)inputValue[++i] + 1000 * (float)inputValue[++i] + (float)inputValue[++i]) / 1000000000;
 
     Serial.flush();
   }
