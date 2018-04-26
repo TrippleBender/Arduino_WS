@@ -6,10 +6,9 @@
 
 // --setting for Serial-communication--
 const uint16_t baudrateSerial = 9600;
-const uint8_t storage = 5;
-float inputValue[storage] = {0.00, 0.00, 0.00, 0.00, 0.00};
-uint8_t i = 0;
-bool startbyte = false;
+const uint8_t storage = 4;
+int inputValue[storage * 2];
+
 
 // --setting for sensor--
 const float pitch_offset = 0.0;                                       //Dynamixel unit 1 = 0,088°
@@ -81,33 +80,22 @@ void setup()
 void loop() 
 {
   
-  if(Serial.available() > 0)
+  if(Serial.available() >= storage * 2)
   {
-    if((char)Serial.read() == 32)             //"space" ist die Anfangsbedingung
-    {
-      i = 0;
-      startbyte = true;
-    }
     
-    if(startbyte)
+    for(int i = 0; i < storage * 2; i++)
     {
       inputValue[i] = Serial.read();
-      i++;
     }
-        
-    if(i == storage-1)
-    {
-      w = (float)inputValue[1]/1000;
-      x = (float)inputValue[2]/1000;
-      y = (float)inputValue[3]/1000;
-      z = (float)inputValue[4]/1000;
 
-      startbyte = false;
-      Serial.flush();
-     }
-   }
+    w = (100000 * (float)inputValue[0] + inputValue[1]) / 100000;
+    x = (100000 * (float)inputValue[2] + inputValue[3]) / 100000;
+    y = (100000 * (float)inputValue[4] + inputValue[5]) / 100000;
+    z = (100000 * (float)inputValue[6] + inputValue[7]) / 100000;
+
+    Serial.flush();
+  }
     
-      
     // roll (x-axis rotation)
     float sinr = +2.0 * (w * x + y * z);
     float cosr = +1.0 - 2.0 * (x * x + y * y);

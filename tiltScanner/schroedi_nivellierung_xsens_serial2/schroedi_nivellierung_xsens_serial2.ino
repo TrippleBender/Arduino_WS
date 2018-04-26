@@ -6,10 +6,9 @@
 
 // --setting for Serial-communication--
 const uint16_t baudrateSerial = 9600;
-const uint8_t storage = 5;
-float inputValue[storage] = {0.00, 0.00, 0.00, 0.00, 0.00};
-uint8_t i = 0;
-bool startbyte = false;
+const uint8_t storage = 4;
+int inputValue[storage] = {0.00, 0.00, 0.00, 0.00};
+
 
 // --setting for sensor--
 const float pitch_offset = 0.0;                                       //Dynamixel unit 1 = 0,088°
@@ -37,8 +36,8 @@ const uint16_t maxValueRoll = 2648;
 
 const uint16_t restraint = 57;                                        //restraint of 5° before stop collar of Dynamixel
 
-float x = 0, y = 0, z = 0, w = 0;
-float pitch = 0, roll = 0, yaw = 0;
+double x = 0, y = 0, z = 0, w = 0;
+double pitch = 0, roll = 0, yaw = 0;
 
 
 
@@ -81,48 +80,29 @@ void setup()
 void loop() 
 {
   
-  if(Serial.available() > 0)
+  if(Serial.available() >= 2 * storage)
   {
-    if((char)Serial.read() == 32)             //"space" ist die Anfangsbedingung
-    {
-      i = 0;
-      startbyte = true;
-    }
-    
-    if(startbyte)
-    {
-      inputValue[i] = Serial.read();
-      i++;
-    }
-        
-    if(i == storage-1)
-    {
-      w = (float)inputValue[1]/1000;
-      x = (float)inputValue[2]/1000;
-      y = (float)inputValue[3]/1000;
-      z = (float)inputValue[4]/1000;
-
-      startbyte = false;
-      Serial.flush();
-     }
+    w = Serial.read();
+    x = Serial.read();
+    y = Serial.read();
+    z = Serial.read();
    }
     
-      
     // roll (x-axis rotation)
-    float sinr = +2.0 * (w * x + y * z);
-    float cosr = +1.0 - 2.0 * (x * x + y * y);
+    double sinr = +2.0 * (w * x + y * z);
+    double cosr = +1.0 - 2.0 * (x * x + y * y);
     roll = atan2(sinr, cosr) * (180/PI);
    
     // pitch (y-axis rotation)
-    float sinp = +2.0 * (w * y - z * x);
+    double sinp = +2.0 * (w * y - z * x);
     if (fabs(sinp) >= 1)
       pitch = copysign(M_PI / 2, sinp) * (180/PI);                      //use 90 degrees if out of range
     else
       pitch = asin(sinp) * (180/PI);
 
     // yaw (z-axis rotation)
-    float siny = +2.0 * (w * z + x * y);
-    float cosy = +1.0 - 2.0 * (y * y + z * z);  
+    double siny = +2.0 * (w * z + x * y);
+    double cosy = +1.0 - 2.0 * (y * y + z * z);  
     yaw = atan2(siny, cosy) * (180/PI);
   
     Serial.print("Roll = ");
