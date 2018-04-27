@@ -104,6 +104,12 @@ float grab_fields()
   if(Serial.read() == check)
   {
     tmp /= (10 * storage);
+
+    if(tmp < -1 || tmp > 1)
+    {
+      Serial.println("ERROR: wrong value of Quaternion");
+      return -10;
+    }
     return tmp;
   }
 
