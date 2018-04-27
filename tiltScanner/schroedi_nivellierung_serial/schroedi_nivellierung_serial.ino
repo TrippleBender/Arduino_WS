@@ -34,6 +34,9 @@ const uint16_t homePositionRoll = 2048;
 const uint16_t minValueRoll = 1448;
 const uint16_t maxValueRoll = 2648;
 
+const uint16_t restraint = 57;                                        //restraint of 5° before stop collar of Dynamixel
+
+
 uint16_t pitch = 0, roll = 0;
 
 
@@ -93,8 +96,37 @@ void setup() {
 void loop() 
 {
   imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  pitch = (uint16_t)((-(float)(euler.z()) + 0.5 * angle) * unit + pitch_offset);
+  pitch = (uint16_t)((-(float)(euler.z()) + angle/2) * unit + pitch_offset);
   roll = (uint16_t)((-(float)(euler.y()) + angle) * unit + roll_offset);
+
+  Serial.print("Pitch: ");
+  Serial.print(euler.z());
+
+  Serial.print("    Roll: ");
+  Serial.println(euler.y());
+
+  if(pitch < minValuePitch + restraint && pitch > maxValuePitch - restraint && roll < minValueRoll + restraint && roll > maxValueRoll - restraint)      //prevent driving into the stop of Dynamixel
+  {
+    if(pitch < minValuePitch + restraint)
+    {
+      pitch = minValuePitch + restraint;
+    }
+
+    if(pitch > maxValuePitch - restraint)
+    {
+      pitch = maxValuePitch - restraint;
+    }
+
+    if(roll < minValueRoll + restraint)
+    {
+      roll = minValueRoll + restraint;
+    }
+
+    if(roll > maxValueRoll - restraint)
+    {
+      roll = maxValueRoll - restraint;
+    }
+  }
 
   motor_pitch.goalPosition(pitch);
   motor_roll.goalPosition(roll);
@@ -104,4 +136,6 @@ void loop()
 
   Serial.print("    Roll: ");
   Serial.println(roll);
+
+  Serial.println("------------------------------------------");
 }
