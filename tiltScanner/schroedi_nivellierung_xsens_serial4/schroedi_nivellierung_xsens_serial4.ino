@@ -86,6 +86,12 @@ float grab_fields()
   for(uint8_t i = 0; i < storage; i++)
     {
     inputValue[i] = Serial.read();
+
+    if(inputValue[i] == check)
+    {
+      Serial.println("ERROR: missed data!");
+      break;
+    }
       
     tmp *= 10;
     
@@ -100,19 +106,14 @@ float grab_fields()
     tmp /= (10 * storage);
     return tmp;
   }
-  
-  else
-  {
-    Serial.println("Ende der Nachricht fehlt");
-  }
 
+  Serial.println("ERROR: missing end of message");
+  return -10;
 }
 
 
 void loop() 
-{
-  float value = 0.00;
-  
+{  
   if(Serial.read() == check)
   {
     switch(Serial.read())
@@ -138,7 +139,7 @@ void loop()
         break;
 
       default:
-        Serial.println("Übertragungsvariable nicht erhalten!");
+        Serial.println("ERROR: missing clear assignment!");
         break;
     }
   }
