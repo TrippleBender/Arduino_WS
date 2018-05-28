@@ -112,8 +112,6 @@ DynamixelMotor motor_roll(interface, id_roll);                        //set id o
 void setup() {
 
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(RST, HIGH);
-
   
   nh.initNode();
 
@@ -140,6 +138,7 @@ void setup() {
   
   pinMode(INT, INPUT);
   pinMode(RST, OUTPUT);
+  digitalWrite(RST, HIGH);
 
 
   // --initialise the servos--

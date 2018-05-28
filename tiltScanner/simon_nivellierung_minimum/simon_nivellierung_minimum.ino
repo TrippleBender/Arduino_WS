@@ -2,13 +2,17 @@
 
 #include <DynamixelMotor.h>
 
+#include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
+#include <utility/imumaths.h>
 
 
 #define RX 9
 #define TX 10
 #define CP 5
+#define INT A5
+#define RST 12
 
 
 // --setting for sensor--
@@ -58,6 +62,10 @@ void setup() {
   bno.setAxisRemap(0x21);
   bno.setAxisSign(0x02);
   delay(100);
+
+  pinMode(INT, INPUT);
+  pinMode(RST, OUTPUT);
+  digitalWrite(RST, HIGH);
 
 
   // --initialise the servos--
@@ -115,4 +123,39 @@ void loop()
   
   motor_pitch.goalPosition(pitch);
   motor_roll.goalPosition(roll);
+
+  sensorStatus();
 }
+
+
+void sensorStatus(void)
+{  
+  /* Get the system status values (mostly for debugging purposes) */
+  uint8_t system_status, self_test_results, system_error;
+  system_status = self_test_results = system_error = 0;
+  bno.getSystemStatus(&system_status, &self_test_results, &system_error);
+
+  if((system_status, HEX) != 0)
+  {
+    reset_IMU();
+  }
+}
+
+
+void reset_IMU()
+{
+  digitalWrite(RST, LOW);
+  motor_pitch.led(HIGH);
+  motor_roll.led(HIGH);
+
+  delay(10);
+  digitalWrite(RST, HIGH);
+  delay(10);
+
+  bno.begin();
+  bno.setMode(0x8);
+  bno.setAxisRemap(0x21);
+  bno.setAxisSign(0x02);
+  delay(100);
+}
+
