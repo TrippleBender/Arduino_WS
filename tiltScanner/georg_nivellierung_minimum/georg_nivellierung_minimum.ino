@@ -14,8 +14,8 @@
 
 
 // --setting for sensor--
-const float pitch_offset = 0.0;                                       //Dynamixel unit 1 = 0,088°
-const float roll_offset = 0.0;
+const float pitch_offset = -30;                                     //Dynamixel unit 1 = 0,088°
+const float roll_offset = 34;
 const float angle = 180.0;                                            //unit = degree
 const float unit = 11.377778;
 
@@ -24,7 +24,7 @@ unsigned long frequency = 1;                                         //How often
 
 
 // --settings for Dynamixel--
-const uint8_t id_pitch = 2;
+const uint8_t id_pitch = 5;
 const uint8_t id_roll = 1;
 const uint32_t baudrate = 57142;
 
@@ -32,14 +32,14 @@ uint16_t approachSpeed = 150;
 const static uint16_t levelSpeed = 1023;                              //1023 = MaxSpeed
 
 const uint16_t homePositionPitch = 2048;
-const uint16_t minValuePitch = 1400;
-const uint16_t maxValuePitch = 2280;
+const uint16_t minValuePitch = 1538;
+const uint16_t maxValuePitch = 2558;
 
 const uint16_t homePositionRoll = 2048;
-const uint16_t minValueRoll = 1448;
-const uint16_t maxValueRoll = 2648;
+const uint16_t minValueRoll = 1538;
+const uint16_t maxValueRoll = 2558;
 
-const uint16_t restraint = 57;                                        //restraint of 5° before stop collar of Dynamixel
+const uint16_t restraint = 57;
 
 uint16_t pitch = 0, roll = 0, oldPitch = 0, oldRoll = 0;
 
@@ -56,6 +56,8 @@ DynamixelMotor motor_roll(interface, id_roll);                        //set id o
 
 void setup() {
 
+  Serial.begin(9600);
+
   // --initialise the sensor--
 
   pinMode(INT, INPUT);
@@ -64,10 +66,7 @@ void setup() {
   
   bno.begin();
   bno.setMode(0x8);
-  bno.setAxisRemap(0x21);
-  bno.setAxisSign(0x02);
   delay(100);
-
 
   // --initialise the servos--
 
@@ -90,9 +89,9 @@ void setup() {
 
   motor_pitch.led(LOW);
   motor_roll.led(LOW);
-
+  
   delay(1000);
-    
+
   motor_pitch.speed(levelSpeed);                                      //speed for levelling the laserscanner
   motor_roll.speed(levelSpeed);
 }
@@ -100,8 +99,8 @@ void setup() {
 void loop() 
 {
   imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  pitch = (uint16_t)((-(float)(euler.z()) + angle/2) * unit + pitch_offset);
-  roll = (uint16_t)((-(float)(euler.y()) + angle) * unit + roll_offset);
+  roll = (uint16_t)((-(float)(euler.z()) + angle) * unit + roll_offset);
+  pitch = (uint16_t)(((float)(euler.y()) + angle) * unit + pitch_offset);
 
   if(pitch < minValuePitch + restraint && pitch > maxValuePitch - restraint && roll < minValueRoll + restraint && roll > maxValueRoll - restraint)      //prevent driving into the stop of Dynamixel
   {
@@ -129,6 +128,10 @@ void loop()
   motor_pitch.goalPosition(pitch);
   motor_roll.goalPosition(roll);
 
+  Serial.print("Pitch: ");
+  Serial.println(pitch);
+  Serial.println(roll);
+
   if(millis() - oldT > (1000/frequency))
   {
     if(oldPitch == pitch && oldRoll == roll)
@@ -139,14 +142,16 @@ void loop()
     oldRoll = roll;
     oldT = millis();
   }
+  
 }
 
 
 void sensorStatus(void)
 {  
   uint8_t system_status, self_test_results, system_error;
-  system_status = self_test_results = system_error = 0;
+  system_status = 0;
   bno.getSystemStatus(&system_status, &self_test_results, &system_error);
+  Serial.println(system_status);
 
   if(system_status == 1)
   {
@@ -167,7 +172,6 @@ void reset_IMU()
 
   bno.begin();
   bno.setMode(0x8);
-  bno.setAxisRemap(0x21);
-  bno.setAxisSign(0x02);
   delay(100);
 }
+

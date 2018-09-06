@@ -1,5 +1,3 @@
-#include <ArduinoHardware.h>
-
 #include <DynamixelMotor.h>
 
 #include <Wire.h>
@@ -16,10 +14,13 @@
 
 
 // --setting for sensor--
-const float pitch_offset = 160.0;                                       //Dynamixel unit 1 = 0,088°
+const float pitch_offset = 160.0;                                     //Dynamixel unit 1 = 0,088°
 const float roll_offset = 0.0;
 const float angle = 180.0;                                            //unit = degree
 const float unit = 11.377778;
+
+unsigned long oldT = 0;
+unsigned long frequency = 1;                                         //How often the sensor will be checked (unit = Hz)
 
 
 // --settings for Dynamixel--
@@ -38,9 +39,9 @@ const uint16_t homePositionRoll = 2048;
 const uint16_t minValueRoll = 1448;
 const uint16_t maxValueRoll = 2648;
 
-const uint16_t restraint = 5;
+const uint16_t restraint = 57;
 
-uint16_t pitch = 0, roll = 0;
+uint16_t pitch = 0, roll = 0, oldPitch = 0, oldRoll = 0;
 
 
 
@@ -57,16 +58,13 @@ void setup() {
 
   // --initialise the sensor--
 
-  bno.begin();
-  bno.setMode(0x8);
-  bno.setAxisRemap(0x21);
-  bno.setAxisSign(0x02);
-  delay(100);
-
   pinMode(INT, INPUT);
   pinMode(RST, OUTPUT);
   digitalWrite(RST, HIGH);
 
+  bno.begin();
+  bno.setMode(0x8);
+  delay(100);
 
   // --initialise the servos--
 
@@ -87,9 +85,13 @@ void setup() {
   motor_roll.speed(approachSpeed);
   motor_roll.goalPosition(homePositionRoll);
 
+  motor_pitch.led(LOW);
+  motor_roll.led(LOW);
+  
+  delay(1000);
+
   motor_pitch.speed(levelSpeed);                                      //speed for levelling the laserscanner
   motor_roll.speed(levelSpeed);
-  delay(1000);
 }
 
 void loop() 
@@ -124,18 +126,27 @@ void loop()
   motor_pitch.goalPosition(pitch);
   motor_roll.goalPosition(roll);
 
-  sensorStatus();
+  if(millis() - oldT > (1000/frequency))
+  {
+    if(oldPitch == pitch && oldRoll == roll)
+    {
+      sensorStatus();
+    }
+    oldPitch = pitch;
+    oldRoll = roll;
+    oldT = millis();
+  }
+  
 }
 
 
 void sensorStatus(void)
 {  
-  /* Get the system status values (mostly for debugging purposes) */
   uint8_t system_status, self_test_results, system_error;
   system_status = self_test_results = system_error = 0;
   bno.getSystemStatus(&system_status, &self_test_results, &system_error);
 
-  if((system_status, HEX) != 0)
+  if(system_status == 1)
   {
     reset_IMU();
   }
@@ -154,8 +165,6 @@ void reset_IMU()
 
   bno.begin();
   bno.setMode(0x8);
-  bno.setAxisRemap(0x21);
-  bno.setAxisSign(0x02);
   delay(100);
 }
 
